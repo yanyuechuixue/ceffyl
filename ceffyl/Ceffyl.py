@@ -4,6 +4,35 @@ from enterprise.signals.parameter import Uniform
 from ceffyl import models
 import os
 import webbrowser
+from scipy.interpolate import interp1d, RegularGridInterpolator
+import json
+int_limit_data = np.load("/workspace/Ubuntu/EOS_cosmology_rev_1/data/int_lim_over_A2.npy")
+
+with open('/workspace/Ubuntu/EOS_cosmology_rev_1/data/wIGW320.json') as f:
+#with open('./data/wIGW721.json') as f:
+    data = json.load(f)
+data_w_values = np.array([data[i][0][0][0] for i in range(len(data))])
+data_k_eta_r_values = np.array([data[0][j][0][1] for j in range(len(data[0]))])
+
+int_overA2_interp_inner = RegularGridInterpolator((data_w_values, data_k_eta_r_values), int_limit_data)
+
+def int_limit_over_A2(w, k_eta_r, log10_f_ast):
+    # we do not use the parameter log10_f_ast, but we keep it in the function definition to be consistent with the other functions.
+    assert 0 < w <= data_w_values.max()
+    assert data_k_eta_r_values.min() <= k_eta_r <= data_k_eta_r_values.max()
+    if type(k_eta_r) is float:
+        int_overA2_value = int_overA2_interp_inner([w, k_eta_r])
+    else:
+        assert len(k_eta_r) == 1
+        int_overA2_value = int_overA2_interp_inner([w, k_eta_r[0]])
+
+    return int_overA2_value
+
+def integrate_limit(log10_A,log10_f_ast,w,k_eta_r):
+    A = 10**log10_A
+    assert  10**(-8) <  A < 10**1
+    inte = A**2 * int_limit_over_A2(w=w,k_eta_r=k_eta_r,log10_f_ast=log10_f_ast)
+    return inte
 
 """
 Classes to create noise signals and a parallel tempered PTMCMCSampler object
@@ -502,7 +531,36 @@ class ceffyl():
             logpdf += np.log(jac)  # is there a factor of two mistake?
 
         logpdf += np.log(self.db)  # integration infinitessimal
-        return np.sum(logpdf)
+
+        original_ln_likelihood = np.sum(logpdf)
+
+        # our code
+        assert len(xs) == 4 or len(xs) == 6 # 6 for with SMBHB and 4 for without SMBHB.
+        if len(xs) == 4:
+            my_log10_A, my_log10_f_ast, my_w, my_log10_k_eta_r = xs
+        elif len(xs) ==6:
+            my_log10_A, my_log10_f_ast, my_w, my_log10_k_eta_r,_,_ = xs
+        else:
+            assert 0
+        
+        assert -8<= my_log10_A <=1
+        assert -8<= my_log10_f_ast <=-3
+        assert 0.000000000001<= my_w <=1
+        assert 1.001<= my_log10_k_eta_r <=2.9999
+        my_k_eta_r  = 10**my_log10_k_eta_r
+        Omega_Tot  =  integrate_limit(log10_A=my_log10_A,log10_f_ast=my_log10_f_ast,w=my_w,k_eta_r=my_k_eta_r)
+        Omega_Tot_obs = 0
+        Omega_Tot_obs_sigma = 1.45e-7 # 2.9e-7 is 2 sigma
+        # Neff = Omega_Tot * 0.234 / (1.3e-6) + 3.046
+        # print("Neff is: ", Neff)
+        # ![](https://raw.githubusercontent.com/yanyuechuixue/ImageHost/main/img/202403272116027.png)
+        # Neff_obs = 2.99
+        # Neff_obs_1sigma = 0.17
+        # our_ln_likehood = -0.5*((Neff_obs - Neff)/Neff_obs_1sigma)**2
+        our_ln_likehood = -0.5*((Omega_Tot - Omega_Tot_obs)/Omega_Tot_obs_sigma)**2
+        return original_ln_likelihood  +  our_ln_likelihood
+        # end of our code
+
 
     """
     def hist_ln_likelihood(self, xs):

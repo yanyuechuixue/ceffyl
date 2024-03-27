@@ -557,6 +557,7 @@ class ceffyl():
         # Neff_obs = 2.99
         # Neff_obs_1sigma = 0.17
         # our_ln_likehood = -0.5*((Neff_obs - Neff)/Neff_obs_1sigma)**2
+        print("Omega_Tot is :",Omega_Tot)
         our_ln_likehood_CMB = -0.5*((Omega_Tot - 0)/Omega_Tot_obs_sigma_CMB)**2
         our_ln_likehood_BBN = -0.5*((Omega_Tot - 0)/Omega_Tot_obs_sigma_BBN)**2
 

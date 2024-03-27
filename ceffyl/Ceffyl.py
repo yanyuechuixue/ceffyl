@@ -20,7 +20,7 @@ def int_limit_over_A2(w, k_eta_r, log10_f_ast):
     # we do not use the parameter log10_f_ast, but we keep it in the function definition to be consistent with the other functions.
     assert 0 < w <= data_w_values.max()
     assert data_k_eta_r_values.min() <= k_eta_r <= data_k_eta_r_values.max()
-    if type(k_eta_r) is float:
+    if type(k_eta_r) is float or type(k_eta_r) is np.float64:
         int_overA2_value = int_overA2_interp_inner([w, k_eta_r])
     else:
         assert len(k_eta_r) == 1

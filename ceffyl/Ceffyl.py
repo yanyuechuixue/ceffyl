@@ -549,16 +549,18 @@ class ceffyl():
         assert 1.001<= my_log10_k_eta_r <=2.9999
         my_k_eta_r  = 10**my_log10_k_eta_r
         Omega_Tot  =  integrate_limit(log10_A=my_log10_A,log10_f_ast=my_log10_f_ast,w=my_w,k_eta_r=my_k_eta_r)
-        Omega_Tot_obs = 0
-        Omega_Tot_obs_sigma = 1.45e-7 # 2.9e-7 is 2 sigma
+        Omega_Tot_obs_sigma_CMB = 1.45e-7 # 2.9e-7 is 2 sigma
+        Omega_Tot_obs_sigma_BBN = 6.5e-7 # 1.3e-6 is 2 sigma
         # Neff = Omega_Tot * 0.234 / (1.3e-6) + 3.046
         # print("Neff is: ", Neff)
         # ![](https://raw.githubusercontent.com/yanyuechuixue/ImageHost/main/img/202403272116027.png)
         # Neff_obs = 2.99
         # Neff_obs_1sigma = 0.17
         # our_ln_likehood = -0.5*((Neff_obs - Neff)/Neff_obs_1sigma)**2
-        our_ln_likehood = -0.5*((Omega_Tot - Omega_Tot_obs)/Omega_Tot_obs_sigma)**2
-        return original_ln_likelihood  +  our_ln_likelihood
+        our_ln_likehood_CMB = -0.5*((Omega_Tot - 0)/Omega_Tot_obs_sigma_CMB)**2
+        our_ln_likehood_BBN = -0.5*((Omega_Tot - 0)/Omega_Tot_obs_sigma_BBN)**2
+
+        return original_ln_likelihood  +  our_ln_likehood_CMB + our_ln_likehood_BBN
         # end of our code
 
 
